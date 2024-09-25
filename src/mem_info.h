@@ -39,7 +39,7 @@ struct MemInfo {
 
 	static void Error(const char* str) { std::cerr << str << std::endl; }
 
-	void Init() {
+	inline MemInfo() {
 #ifdef _WIN32
 		MEMORYSTATUSEX memInfo;
 		memInfo.dwLength = sizeof(MEMORYSTATUSEX);
@@ -52,9 +52,9 @@ struct MemInfo {
 		int error = sysctl(mib, 2, &physical_memory, &length, nullptr, 0);
 
 		if (error != 0) {
-      Error("error getting physical memory");
-      return;
-    }
+			Error("error getting physical memory");
+			return;
+		}
 
 		mach_port_t host_port = mach_host_self();
 		vm_size_t page_size;
@@ -102,9 +102,5 @@ struct MemInfo {
 		}
 		free_memory = (physical_memory - memFree - buffers - cached);
 #endif
-	}
-
-	inline MemInfo() {
-		Init();
 	}
 };
