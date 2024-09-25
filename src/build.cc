@@ -41,6 +41,7 @@
 #include "status.h"
 #include "subprocess.h"
 #include "util.h"
+#include "mem_info.h"
 
 using namespace std;
 
@@ -629,6 +630,11 @@ size_t RealCommandRunner::CanRunMore() const {
   }
 
   if (capacity < 0)
+    capacity = 0;
+
+  MemInfo memory_info;
+
+  if (memory_info.free_memory < FromUnits<SiPrefix::MB>(100))
     capacity = 0;
 
   if (capacity == 0 && subprocs_.running_.empty())
