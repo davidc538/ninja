@@ -50,7 +50,11 @@ struct MemInfo {
 		size_t length = sizeof(physical_memory);
 		int mib[2] = { CTL_HW, HW_MEMSIZE };
 		int error = sysctl(mib, 2, &physical_memory, &length, nullptr, 0);
-		if (error != 0) throw std::runtime_error("error getting physical memory");
+
+		if (error != 0) {
+      Error("error getting physical memory");
+      return;
+    }
 
 		mach_port_t host_port = mach_host_self();
 		vm_size_t page_size;
@@ -58,17 +62,16 @@ struct MemInfo {
 
 		vm_statistics64_data_t vm_stats;
 		mach_msg_type_number_t count = HOST_VM_INFO_COUNT;
-		if (host_statistics64(host_port, HOST_VM_INFO, (host_info64_t)&vm_stats, &count) != KERN_SUCCESS) {
+		if (host_statistics64(host_port, HOST_VM_INFO, reinterpret_cast<host_info64_t>(&vm_stats), &count) != KERN_SUCCESS) {
 			Error("error getting used memory");
 			return;
 		}
 
-		size_t free_memory = static_cast<size_t>(vm_stats.free_count) * page_size;
 		size_t active_memory = static_cast<size_t>(vm_stats.active_count) * page_size;
 		size_t inactive_memory = static_cast<size_t>(vm_stats.inactive_count) * page_size;
 		size_t wired_memory = static_cast<size_t>(vm_stats.wire_count) * page_size;
 
-		this->free_memory = physical_memory - (active_memory + inactive_memory + wired_memory);
+		free_memory = physical_memory - (active_memory + inactive_memory + wired_memory);
 #elif __linux__
 		std::ifstream meminfo("/proc/meminfo");
 
